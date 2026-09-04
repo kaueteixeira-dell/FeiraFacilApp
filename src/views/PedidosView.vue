@@ -1,6 +1,45 @@
 <script setup>
-  // O aluno deverá implementar a lógica do componente.
-  // import { pedidos } from '@/data/pedidos'
+  //O aluno deverá implementar a lógica do componente.
+  import { computed, ref } from 'vue'
+  import { pedidos } from '@/data/pedidos'
+
+  const filtro = ref('')
+  const termoFiltro = ref('')
+
+  const pedidosFiltrados = computed(() => {
+    const termo = termoFiltro.value.trim().toLowerCase()
+
+    if (!termo) {
+      return pedidos.value
+    }
+
+    return pedidos.value.filter((pedido) =>
+      pedido.codigo.toLowerCase().includes(termo) ||
+      pedido.cliente.toLowerCase().includes(termo),
+    )
+  })
+
+  function filtrarPedidos() {
+    termoFiltro.value = filtro.value
+  }
+
+  function calcularTotalVendido() {
+    return pedidos.value.reduce(
+      (total, pedido) => total + calcularTotalPedido(pedido),
+      0,
+    )
+  }
+
+  function quantidadeItens(pedido) {
+    return pedido.itens.reduce((total, item) => total + item.quantidade, 0)
+  }
+
+  function calcularTotalPedido(pedido) {
+    return pedido.itens.reduce(
+      (total, item) => total + item.precoUnitario * item.quantidade,
+      0,
+    )
+  }
 </script>
 
 <template>
@@ -18,23 +57,22 @@
     >
       <article class="summary-card">
         <span>Pedidos realizados</span>
-
         <!-- O aluno deverá calcular este valor. -->
-        <strong>0</strong>
+        <strong>{{ pedidos.length }}</strong>
       </article>
 
       <article class="summary-card">
         <span>Itens vendidos</span>
 
         <!-- O aluno deverá calcular este valor. -->
-        <strong>0</strong>
+        <strong>{{ pedidos.reduce((total, pedido) => total + quantidadeItens(pedido), 0) }}</strong>
       </article>
 
       <article class="summary-card">
         <span>Total vendido</span>
 
         <!-- O aluno deverá calcular este valor. -->
-        <strong>R$ 0,00</strong>
+        <strong>R$ {{ calcularTotalVendido() }}</strong>
       </article>
     </section>
 
@@ -52,10 +90,11 @@
             name="filtro"
             type="search"
             placeholder="Digite o cliente ou código"
+            v-model="filtro"
           />
         </div>
 
-        <button class="button button-primary" type="button">
+        <button class="button button-primary" type="button" @click="filtrarPedidos">
           Filtrar
         </button>
       </div>
@@ -83,17 +122,17 @@
           </thead>
 
           <tbody>
-           <!--
-              Exemplo da estrutura que deverá ser repetida pelo aluno:
+            <tr v-if="pedidosFiltrados.length === 0">
+              <td colspan="5">Nenhum pedido encontrado.</td>
+            </tr>
 
-              <tr>
-                <td>Código do pedido</td>
-                <td>Nome do cliente</td>
-                <td>Quantidade de produtos diferentes</td>
-                <td>Quantidade total de itens</td>
-                <td>Valor total do pedido</td>
-              </tr>
-            -->
+            <tr v-for="pedido in pedidosFiltrados" :key="pedido.codigo">
+              <td>{{ pedido.codigo }}</td>
+              <td>{{ pedido.cliente }}</td>
+              <td>{{ pedido.itens.length }}</td>
+              <td>{{ quantidadeItens(pedido) }}</td>
+              <td>R$ {{ calcularTotalPedido(pedido).toFixed(2) }}</td>
+            </tr>
           </tbody>
         </table>
       </div>
